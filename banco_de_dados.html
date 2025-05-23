@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Loja de Tênis</title>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: #111;
+      color: #fff;
+    }
+
+    header {
+      background-color: #000;
+      text-align: center;
+      padding: 10px;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      color: red;
+    }
+
+    .form-container {
+      padding: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+      background-color: #1a1a1a;
+    }
+
+    input, button {
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+
+    input {
+      width: 100px;
+      background-color: #222;
+      color: #fff;
+    }
+
+    button {
+      background-color: red;
+      color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #cc0000;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .product-card {
+      background-color: #1f1f1f;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+
+    .product-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    .product-card h3 {
+      margin: 10px 0 5px;
+      font-size: 1.1rem;
+    }
+
+    .product-card p {
+      color: #aaa;
+      margin-bottom: 10px;
+    }
+
+    .product-card button {
+      margin: 5px;
+      padding: 8px 12px;
+      background-color: #333;
+    }
+
+    .banner {
+      background-image: url('https://img.freepik.com/vetores-premium/letra-m-branca-em-um-fundo-preto_853558-4015.jpg');
+      background-size: cover;
+      background-position: center;
+      height: 200px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Loja de Tênis</h1>
+  </header>
+
+  <div class="banner"></div>
+
+  <div class="form-container">
+    <input type="text" id="productId" placeholder="ID">
+    <input type="text" id="productName" placeholder="Nome do Tênis">
+    <input type="text" id="productPrice" placeholder="Preço">
+    <input type="text" id="productImg" placeholder="Imagem (URL)">
+    <button onclick="addProduct()">Adicionar</button>
+  </div>
+
+  <div class="product-grid" id="productList"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const firebaseConfig = {
+        apiKey: "AIzaSyCRpzDL2TyH4r_k8ukVgsjUzhx-OqIRqoo",
+        authDomain: "banco-de-dados-f93cb.firebaseapp.com",
+        projectId: "banco-de-dados-f93cb",
+        storageBucket: "banco-de-dados-f93cb.appspot.com",
+        messagingSenderId: "123627271944",
+        appId: "1:123627271944:web:0fd83413467354252c1ebd",
+        measurementId: "G-2QJDD2FK3G"
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.database().ref("produtos");
+
+      function addProduct() {
+        const id = document.getElementById("productId").value.trim();
+        const nome = document.getElementById("productName").value.trim();
+        const preco = document.getElementById("productPrice").value.trim();
+        const imagem = document.getElementById("productImg").value.trim();
+
+        if (id && nome && preco && imagem) {
+          db.child(id).set({ nome, preco, imagem });
+          document.getElementById("productId").value = "";
+          document.getElementById("productName").value = "";
+          document.getElementById("productPrice").value = "";
+          document.getElementById("productImg").value = "";
+        } else {
+          alert("Preencha todos os campos!");
+        }
+      }
+
+      function deleteProduct(id) {
+        if (confirm(`Excluir produto ${id}?`)) {
+          db.child(id).remove();
+        }
+      }
+
+      function updateProduct(id) {
+        let nome = prompt("Novo nome:");
+        let preco = prompt("Novo preço:");
+        let imagem = prompt("Nova imagem (URL):");
+        if (nome && preco && imagem) {
+          db.child(id).update({ nome, preco, imagem });
+        }
+      }
+
+      db.on("value", (snapshot) => {
+        const list = document.getElementById("productList");
+        list.innerHTML = "";
+
+        snapshot.forEach((childSnapshot) => {
+          const id = childSnapshot.key;
+          const { nome, preco, imagem } = childSnapshot.val();
+
+          const card = document.createElement("div");
+          card.className = "product-card";
+          card.innerHTML = `
+            <img src="${imagem}" alt="${nome}">
+            <h3>${nome}</h3>
+            <p>R$ ${preco}</p>
+            <button onclick="updateProduct('${id}')">Editar</button>
+            <button onclick="deleteProduct('${id}')">Excluir</button>
+          `;
+          list.appendChild(card);
+        });
+      });
+
+      window.addProduct = addProduct;
+      window.deleteProduct = deleteProduct;
+      window.updateProduct = updateProduct;
+    });
+  </script>
+</body>
+</html>
